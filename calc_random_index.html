@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Calc Random</title>
+<style>
+body{font-family:system-ui;margin:0;background:#f4f6fb;color:#172033}.wrap{max-width:850px;margin:auto;padding:18px}
+.card{background:#fff;border-radius:18px;padding:20px;margin:14px 0;box-shadow:0 5px 20px #0001}
+h1{margin:0}.muted{color:#657089}.row{display:flex;gap:10px;flex-wrap:wrap}button,select{padding:11px 14px;border:0;border-radius:10px;font:inherit;background:#e9edf5}button{cursor:pointer}.primary{background:#172033;color:#fff}
+.q{font-size:23px;line-height:1.7;min-height:80px}.ans{display:none;background:#f1f3f8;padding:14px;border-radius:10px;line-height:1.7}.tag{font-size:13px;background:#edf0f6;padding:5px 9px;border-radius:99px}
+</style>
+<script>window.MathJax={tex:{inlineMath:[['$','$']]},svg:{fontCache:'global'}};</script>
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+</head><body><div class="wrap">
+<div class="card"><h1>∫ Calc Random</h1><p class="muted">สุ่มโจทย์แคลคูลัส พร้อมเฉลยและสถิติ</p></div>
+<div class="card"><div class="row">
+<select id="topic"><option value="all">ทุกหัวข้อ</option><option>limit</option><option>derivative</option><option>integral</option><option>series</option></select>
+<select id="level"><option value="all">ทุกระดับ</option><option value="high">ม.ปลาย</option><option value="uni">มหาวิทยาลัย</option><option value="hard">ยาก</option></select>
+<button class="primary" onclick="newQ()">🎲 สุ่มโจทย์</button><button onclick="showA()">💡 เฉลย</button></div></div>
+<div class="card"><span id="tag" class="tag">โจทย์</span><div id="q" class="q"></div><div id="a" class="ans"></div>
+<div class="row" style="margin:12px 0">
+<input id="userAns" placeholder="พิมพ์คำตอบของคุณ..." style="flex:1;min-width:220px;padding:11px;border:1px solid #ccd3e0;border-radius:10px;font:inherit">
+<button class="primary" onclick="checkAns()">ตรวจคำตอบ</button>
+</div>
+<div id="result" class="muted"></div>
+</div>
+<div class="card"><b>📊 สถิติ</b><p>ทำแล้ว: <span id="d">0</span> | ถูก: <span id="c">0</span> | แม่นยำ: <span id="p">0%</span></p></div>
+<div class="card"><p class="muted">หมายเหตุ: เวอร์ชันนี้ใช้โจทย์ตัวอย่างที่สร้างใหม่ ไม่ได้คัดลอกโจทย์จากเว็บไซต์ภายนอก หากต้องการฐานโจทย์จากแหล่งจริง สามารถต่อฐานข้อมูล/API ที่มีสิทธิ์ใช้งานได้</p></div>
+</div>
+<script>
+const qs=[
+['limit','high','จงหา $\\lim_{x\\to0}\\frac{\\sin x}{x}$','$1$'],
+['limit','uni','จงหา $\\lim_{x\\to\\infty}\\frac{3x^2-2x+1}{x^2+5}$','$3$'],
+['derivative','high','ถ้า $f(x)=x^3-5x^2+2x$ จงหา $f\\prime(x)$','$3x^2-10x+2$'],
+['derivative','uni','จงหาอนุพันธ์ของ $y=x^x$ เมื่อ $x>0$','$x^x(\\ln x+1)$'],
+['integral','high','จงหา $\\int(3x^2-4x+1)\\,dx$','$x^3-2x^2+x+C$'],
+['integral','uni','จงหา $\\int_0^1xe^{x^2}\\,dx$','$\\frac{e-1}{2}$'],
+['series','uni','จงพิจารณา $\\sum_{n=1}^{\\infty}\\frac1{n^2}$ ว่าลู่เข้าหรือไม่','ลู่เข้า เพราะเป็น p-series ที่ $p=2>1$'],
+['series','hard','จงหาสัมประสิทธิ์ของ $x^4$ ใน $e^x$','$\\frac1{4!}=\\frac1{24}$'],
+['integral','hard','จงหา $\\int\\frac{dx}{x^2+1}$','$\\arctan x+C$'],
+['derivative','hard','จงหา $\\frac{d}{dx}\\ln(\\sin x)$','$\\cot x$']
+];
+let cur,done=+localStorage.crd||0,cor=+localStorage.crc||0;
+const RESET_MS=15*60*1000;
+let statsStarted=+(localStorage.crs||Date.now());
+function resetStats(){done=0;cor=0;statsStarted=Date.now();localStorage.crd=0;localStorage.crc=0;localStorage.crs=statsStarted;update();}
+if(Date.now()-statsStarted>=RESET_MS) resetStats();
+setInterval(()=>{if(Date.now()-statsStarted>=RESET_MS) resetStats()},1000);
+
+function newQ(){let t=topic.value,l=level.value,p=qs.filter(x=>(t==='all'||x[0]===t)&&(l==='all'||x[1]===l));cur=p[Math.floor(Math.random()*p.length)]||qs[0];q.innerHTML=cur[2];a.innerHTML='<b>เฉลย:</b> '+cur[3];a.style.display='none';userAns.value='';result.textContent='';tag.textContent=cur[0].toUpperCase()+' • '+({high:'ม.ปลาย',uni:'มหาวิทยาลัย',hard:'ยาก'}[cur[1]]);MathJax.typesetPromise()}
+function showA(){if(cur)a.style.display=a.style.display==='block'?'none':'block'}
+function norm(x){
+ return String(x)
+  .trim()
+  .replace(/[\\s$]/g,'')
+  .replace(/,/g,'')
+  .replace(/\\\\/g,'')
+  .toLowerCase();
+}
+function checkAns(){
+ if(!cur)return;
+ const u=norm(userAns.value), real=norm(cur[3]);
+ if(!u){result.textContent='⚠️ กรุณาพิมพ์คำตอบก่อน';return}
+ if(cur.checked){result.textContent='ℹ️ ข้อนี้ตรวจไปแล้ว — กดสุ่มโจทย์เพื่อทำข้อต่อไป';return}
+ const accepted = (cur[0]==='series' && (u==='ลู่เข้า'||u==='convergent')) || u===real;
+ const ok=accepted;
+ done++; cor+=ok?1:0; cur.checked=true;
+ localStorage.crd=done; localStorage.crc=cor; update();
+ result.textContent=ok?'✅ ถูกต้อง!':'❌ ยังไม่ถูก ลองใหม่ได้';
+ if(ok){setTimeout(newQ,900)}
+}
+function update(){d.textContent=done;c.textContent=cor;p.textContent=done?Math.round(cor/done*100)+'%':'0%'}
+update();newQ();
+</script></body></html>
